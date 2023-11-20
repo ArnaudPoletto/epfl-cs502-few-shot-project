@@ -28,8 +28,8 @@ checkpoint:
   time: latest
 
 wandb:
-  project: ???
-  entity: ???
+  project: biomedicine
+  entity: epfl-darlings
   mode: "online" # Can set to offline, disabled
 
 iter_num: 600

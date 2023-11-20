@@ -1,0 +1,149 @@
+{
+    "os": "Linux-5.15.90.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "python": "3.10.11",
+    "heartbeatAt": "2023-11-20T12:47:40.332256",
+    "startedAt": "2023-11-20T12:47:39.756010",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "exp.name=t",
+        "method=maml",
+        "dataset=swissprot"
+    ],
+    "state": "running",
+    "program": "/home/arnau/cours/biomedicine/project/epfl-cs502-few-shot-project/run.py",
+    "codePath": "run.py",
+    "git": {
+        "remote": "https://github.com/ArnaudPoletto/epfl-cs502-few-shot-project.git",
+        "commit": "1a9a57acf3a7d45976a951c92eea3bf2caa4872e"
+    },
+    "email": null,
+    "root": "/home/arnau/cours/biomedicine/project/epfl-cs502-few-shot-project",
+    "host": "arnaud",
+    "username": "arnau",
+    "executable": "/home/arnau/anaconda3/envs/few/bin/python",
+    "cpu_count": 10,
+    "cpu_count_logical": 20,
+    "cpu_freq": {
+        "current": 3609.599000000001,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3609.599,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "total": 1006.853931427002,
+        "used": 20.188072204589844
+    },
+    "gpu": "NVIDIA GeForce RTX 3080",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3080",
+            "memory_total": 10737418240
+        }
+    ],
+    "memory": {
+        "total": 15.527652740478516
+    }
+}

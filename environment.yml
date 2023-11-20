@@ -1,4 +1,4 @@
-name: fewshotbench
+name: few
 channels:
   - defaults
   - conda-forge
