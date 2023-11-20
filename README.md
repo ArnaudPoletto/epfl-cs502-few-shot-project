@@ -1,4 +1,4 @@
-# Enhancing Few-Shot Learning in Biomedicine
+# Relation Network Model: Enhancing Few-Shot Learning in Biomedicine
 
 ## Overview
 This project aims to implement and benchmark a novel algorithm in the field of few-shot learning, particularly for biomedical applications. We focus on the Relation Network (RN) model, a significant advancement in few-shot learning, and its application to biomedical datasets like Tabula Muris and SwissProt.
