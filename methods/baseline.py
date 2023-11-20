@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import wandb
 from torch.autograd import Variable
 
+import wandb
 from backbones.blocks import distLinear
 from methods.meta_template import MetaTemplate
 
@@ -47,7 +47,6 @@ class Baseline(MetaTemplate):
 
     def set_forward_loss(self, x, y):
         scores = self.forward(x)
-        print(scores.shape)
         if self.type == 'classification':
             y = y.long().cuda()
         else:
