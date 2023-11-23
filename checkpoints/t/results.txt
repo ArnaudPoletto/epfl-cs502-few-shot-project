@@ -1,3 +1,15 @@
 Time: 20231120-135238, Setting: swissprot-train-FCNet-maml 5shot 5way, Acc: 97.20% +- 0.39%, Model: checkpoints/t/swissprot/maml_FCNet/20231120_134738/best_model.tar 
 Time: 20231120-135258, Setting: swissprot-val-FCNet-maml 5shot 5way, Acc: 53.43% +- 0.80%, Model: checkpoints/t/swissprot/maml_FCNet/20231120_134738/best_model.tar 
 Time: 20231120-135314, Setting: swissprot-test-FCNet-maml 5shot 5way, Acc: 54.64% +- 0.65%, Model: checkpoints/t/swissprot/maml_FCNet/20231120_134738/best_model.tar 
+Time: 20231120-151624, Setting: swissprot-train-FCNet-protonet 5shot 5way, Acc: 95.72% +- 0.42%, Model: checkpoints/t/swissprot/protonet_FCNet/20231120_151457/best_model.tar 
+Time: 20231120-151642, Setting: swissprot-val-FCNet-protonet 5shot 5way, Acc: 66.15% +- 0.73%, Model: checkpoints/t/swissprot/protonet_FCNet/20231120_151457/best_model.tar 
+Time: 20231120-151657, Setting: swissprot-test-FCNet-protonet 5shot 5way, Acc: 69.24% +- 0.74%, Model: checkpoints/t/swissprot/protonet_FCNet/20231120_151457/best_model.tar 
+Time: 20231120-155110, Setting: swissprot-train-FCNet-baseline_pp 5shot 5way, Acc: 87.94% +- 0.60%, Model: checkpoints/t/swissprot/baseline_pp_FCNet/20231120_151941/best_model.tar 
+Time: 20231120-155522, Setting: swissprot-val-FCNet-baseline_pp 5shot 5way, Acc: 71.66% +- 0.72%, Model: checkpoints/t/swissprot/baseline_pp_FCNet/20231120_151941/best_model.tar 
+Time: 20231120-155930, Setting: swissprot-test-FCNet-baseline_pp 5shot 5way, Acc: 66.96% +- 0.69%, Model: checkpoints/t/swissprot/baseline_pp_FCNet/20231120_151941/best_model.tar 
+Time: 20231120-162858, Setting: swissprot-train-FCNet-baseline 5shot 5way, Acc: 96.53% +- 0.26%, Model: checkpoints/t/swissprot/baseline_FCNet/20231120_160141/best_model.tar 
+Time: 20231120-163244, Setting: swissprot-val-FCNet-baseline 5shot 5way, Acc: 62.73% +- 0.80%, Model: checkpoints/t/swissprot/baseline_FCNet/20231120_160141/best_model.tar 
+Time: 20231120-163631, Setting: swissprot-test-FCNet-baseline 5shot 5way, Acc: 72.22% +- 0.72%, Model: checkpoints/t/swissprot/baseline_FCNet/20231120_160141/best_model.tar 
+Time: 20231122-193330, Setting: tabula_muris-train-FCNet-maml 5shot 5way, Acc: 96.57% +- 0.40%, Model: checkpoints/t/tabula_muris/maml_FCNet/20231122_192857/best_model.tar 
+Time: 20231122-193356, Setting: tabula_muris-val-FCNet-maml 5shot 5way, Acc: 85.82% +- 0.77%, Model: checkpoints/t/tabula_muris/maml_FCNet/20231122_192857/best_model.tar 
+Time: 20231122-193416, Setting: tabula_muris-test-FCNet-maml 5shot 5way, Acc: 86.76% +- 0.69%, Model: checkpoints/t/tabula_muris/maml_FCNet/20231122_192857/best_model.tar 
