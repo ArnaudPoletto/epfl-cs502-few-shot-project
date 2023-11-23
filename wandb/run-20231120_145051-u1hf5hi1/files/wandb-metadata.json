@@ -1,0 +1,129 @@
+{
+    "os": "Linux-5.10.16.3-microsoft-standard-WSL2-x86_64-with-glibc2.31",
+    "python": "3.10.11",
+    "heartbeatAt": "2023-11-20T13:50:52.430671",
+    "startedAt": "2023-11-20T13:50:51.593173",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "exp.name=t",
+        "method=maml",
+        "dataset=swissprot"
+    ],
+    "state": "running",
+    "program": "/home/ozan/EPFL/MA3/epfl-cs502-few-shot-project/run.py",
+    "codePath": "run.py",
+    "git": {
+        "remote": "git@github.com:ArnaudPoletto/epfl-cs502-few-shot-project.git",
+        "commit": "82c48dc90276a53ad72ed9dde8dfdd9ed7761889"
+    },
+    "email": "ozan.guven@epfl.ch",
+    "root": "/home/ozan/EPFL/MA3/epfl-cs502-few-shot-project",
+    "host": "DESKTOP-TERGJ8F",
+    "username": "ozan",
+    "executable": "/home/ozan/miniconda3/envs/few/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2904.010000000001,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2904.01,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "total": 250.98248672485352,
+        "used": 16.538005828857422
+    },
+    "gpu": "NVIDIA GeForce RTX 3070",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3070",
+            "memory_total": 8589934592
+        }
+    ],
+    "memory": {
+        "total": 7.723499298095703
+    }
+}

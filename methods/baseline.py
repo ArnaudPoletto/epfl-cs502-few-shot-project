@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import wandb
 from torch.autograd import Variable
 
+import wandb
 from backbones.blocks import distLinear
 from methods.meta_template import MetaTemplate
 

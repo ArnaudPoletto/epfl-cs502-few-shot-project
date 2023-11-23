@@ -1,12 +1,15 @@
-import hydra
-import wandb
-from hydra.utils import instantiate
 from math import ceil
+
+import hydra
+from hydra.utils import instantiate
 from omegaconf import OmegaConf
 from prettytable import PrettyTable
+from tqdm import tqdm
 
+import wandb
 from datasets.cell.tabula_muris import *
-from utils.io_utils import get_resume_file, hydra_setup, fix_seed, model_to_dict, opt_to_dict, get_model_file
+from utils.io_utils import (fix_seed, get_model_file, get_resume_file,
+                            hydra_setup, model_to_dict, opt_to_dict)
 
 
 def initialize_dataset_model(cfg):
@@ -113,7 +116,7 @@ def train(train_loader, val_loader, model, cfg):
 
     max_acc = -1
 
-    for epoch in range(cfg.method.start_epoch, cfg.method.stop_epoch):
+    for epoch in tqdm(range(cfg.method.start_epoch, cfg.method.stop_epoch)):
         wandb.log({'epoch': epoch})
         model.train()
         model.train_loop(epoch, train_loader, optimizer)
@@ -174,7 +177,7 @@ def test(cfg, model, split):
 
         acc_str = '%4.2f%% +- %4.2f%%' % (acc_mean, 1.96 * acc_std / np.sqrt(cfg.iter_num))
         f.write('Time: %s, Setting: %s, Acc: %s, Model: %s \n' % (timestamp, exp_setting, acc_str, model_file))
-
+    
     return acc_mean, acc_std
 
 
