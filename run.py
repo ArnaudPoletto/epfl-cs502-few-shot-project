@@ -69,15 +69,15 @@ def run(cfg):
     print("Checkpoint directory:", cfg.checkpoint.dir)
     for split in cfg.eval_split:
         acc_mean, acc_std = test(cfg, model, split)
-        results.append([split, acc_mean, acc_std])
+        results.append([f"{cfg.exp.name}_{cfg.n_way}_{cfg.n_shot}", split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query])
 
-    print(f"Results logged to ./checkpoints/{cfg.exp.name}/results.txt")
+    print(f"Results logged to ./checkpoints/{cfg.method.type}/results.txt")
 
     if cfg.mode == "train":
-        table = wandb.Table(data=results, columns=["split", "acc_mean", "acc_std"])
+        table = wandb.Table(data=results, columns=["name", "split", "acc_mean", "acc_std", "n_way", "n_shot", "n_query"])
         wandb.log({"eval_results": table})
 
-    display_table = PrettyTable(["split", "acc_mean", "acc_std"])
+    display_table = PrettyTable(["name", "split", "acc_mean", "acc_std", "n_way", "n_shot", "n_query"])
     for row in results:
         display_table.add_row(row)
 
@@ -96,7 +96,7 @@ def train(train_loader, val_loader, model, cfg):
     wandb.init(project=cfg.wandb.project, entity=cfg.wandb.entity, config=OmegaConf.to_container(cfg, resolve=True),
                group=cfg.exp.name, settings=wandb.Settings(start_method="thread"), mode=cfg.wandb.mode)
     wandb.define_metric("*", step_metric="epoch")
-
+    
     if cfg.exp.resume:
         resume_file = get_resume_file(cp_dir)
         if resume_file is not None:
@@ -113,9 +113,12 @@ def train(train_loader, val_loader, model, cfg):
     print("Optimizer:")
     print(optimizer)
     wandb.config.update({"optimizer_details": opt_to_dict(optimizer)})
-
+    
+    #print the number of trainable parameters
+    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Number of trainable parameters: {num_params}")
+    
     max_acc = -1
-
     for epoch in tqdm(range(cfg.method.start_epoch, cfg.method.stop_epoch)):
         wandb.log({'epoch': epoch})
         model.train()

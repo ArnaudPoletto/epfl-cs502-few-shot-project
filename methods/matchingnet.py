@@ -62,9 +62,6 @@ class MatchingNet(MetaTemplate):
 
         logprobs = self.set_forward(x)
 
-        print(f"logprobs: {logprobs.shape} {logprobs}")
-        print(f"y_query: {y_query.shape} {y_query}")
-
         return self.loss_fn(logprobs, y_query )
 
     def cuda(self):

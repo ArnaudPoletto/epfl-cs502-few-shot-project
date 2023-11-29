@@ -7,46 +7,91 @@ from methods.meta_template import MetaTemplate
 import wandb
 import torch.nn.functional as F
 
+from typing import List, Literal, Callable
+
 from backbones.blocks import full_block
+
+from enum import Enum
+
+class DistanceType(Enum):
+    """ Enum for the different distance types. """
+    FC_CONC = 'fc-conc'
+    FC_DIFF = 'fc-diff'
+    EUCLIDEAN = 'euclidean'
+    COSINE = 'cosine'
+    L1 = 'l1'
+
+class RelationModule(nn.Module):
+    """ Relation module for RelationNet. """
+    def __init__(self,
+                 feat_dim: int,
+                 deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'],
+                 deep_distance_layer_sizes: List[int],
+                 dropout: float
+        ):
+        super(RelationModule, self).__init__()
+        
+        self.relation_module = nn.Sequential()
+        in_size = feat_dim * (2 if deep_distance_type == 'fc-conc' else 1)
+        for i, out_size in enumerate(deep_distance_layer_sizes[:-1]):
+            # Add dropout to all layers except the last one
+            self.relation_module.add_module(f'fb{i}', full_block(in_size, out_size, dropout=dropout))
+            in_size = out_size
+            
+        self.relation_module.add_module('classifier', nn.Linear(in_size, deep_distance_layer_sizes[-1]))
+        self.relation_module.add_module('sigmoid', nn.Sigmoid())
+
+    def forward(self, x):
+        return self.relation_module(x)
 
 class RelationNet(MetaTemplate):
     def __init__(
             self,
-            backbone,
-            n_way,
-            n_support,
-            deep_distance_layer_sizes = [128, 64, 64, 8, 1],
-            deep_distance_type='l1',
-            representative_aggregation = torch.mean,
-            dropout=0.0
+            backbone: nn.Module,
+            n_way: int,
+            n_support: int,
+            deep_distance_layer_sizes: List[int] = [128, 64, 64, 32, 32, 8, 1],
+            deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'] = 'l1',
+            representative_aggregation: Callable[[torch.Tensor, int], torch.Tensor] | Callable[[torch.Tensor], torch.Tensor] = torch.mean,
+            learning_rate: float = 1e-4,
+            backbone_weight_decay: float = 1e-5,
+            relation_module_dropout: float = 0.0,
         ):
         super(RelationNet, self).__init__(backbone, n_way, n_support)
 
         self.loss_fn = nn.MSELoss().cuda()
         self.distance_type = deep_distance_type
         self.representative_aggregation = representative_aggregation
-        
+
         # Define the relation module, either as deep distance or as a simple distance for ablation
+        self.relation_module = self.get_relation_module(deep_distance_layer_sizes, deep_distance_type, relation_module_dropout)
+        
+        self.backbone_optim = torch.optim.Adam(backbone.parameters(), lr=learning_rate, weight_decay=backbone_weight_decay)
+        self.relation_module_optim = None
+        if deep_distance_type in ['fc-conc', 'fc-diff']:
+            self.relation_module_optim = torch.optim.Adam(self.relation_module.parameters(), lr=learning_rate)
+
+    def get_relation_module(
+            self, 
+            deep_distance_layer_sizes: List[int], 
+            deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc'], 
+            dropout: float
+        ):
+        """ Creates the relation module, either as deep distance or as a simple distance for ablation. """
+        relation_module = None
         match deep_distance_type:
-            case 'fc':
-                self.relation_module = nn.Sequential()
-                in_size = self.feat_dim * 2
-                for i, out_size in enumerate(deep_distance_layer_sizes[:-1]):
-                    # Add dropout to all layers except the last one
-                    self.relation_module.add_module(f'fb{i}', full_block(in_size, out_size, dropout = dropout if i < len(deep_distance_layer_sizes) - 2 else 0))
-                    in_size = out_size
-                    
-                self.relation_module.add_module(f'classifier', nn.Linear(in_size, deep_distance_layer_sizes[-1]))
-                self.relation_module.add_module('sigmoid', nn.Sigmoid())
-                self.relation_module.cuda()
+            case 'fc-conc' | 'fc-diff':
+                relation_module = RelationModule(self.feat_dim, deep_distance_type, deep_distance_layer_sizes, dropout).cuda()
             case 'euclidean':
-                self.relation_module = lambda x: -F.pairwise_distance(x[:, :x.shape[1]//2], x[:, x.shape[1]//2:], p=2).reshape(-1, 1)
+                relation_module = lambda x: -F.pairwise_distance(x[:, :x.shape[1]//2], x[:, x.shape[1]//2:], p=2).reshape(-1, 1)
             case 'cosine':
-                self.relation_module = lambda x: (1 + F.cosine_similarity(x[:, :x.shape[1]//2], x[:, x.shape[1]//2:], dim=1).reshape(-1, 1)) / 2 # Map the cosine similarity [-1, 1] to [0, 1]
+                relation_module = lambda x: (1 + F.cosine_similarity(x[:, :x.shape[1]//2], x[:, x.shape[1]//2:], dim=1).reshape(-1, 1)) / 2 # Map the cosine similarity [-1, 1] to [0, 1]
             case 'l1':
-                self.relation_module = lambda x: -F.pairwise_distance(x[:, :x.shape[1]//2], x[:, x.shape[1]//2:], p=1).reshape(-1, 1)
+                relation_module = lambda x: -F.pairwise_distance(x[:, :x.shape[1]//2], x[:, x.shape[1]//2:], p=1).reshape(-1, 1)
             case _: 
                 raise ValueError('deep_distance_type must be one of [fc, euclidean, cosine, l1]')
+            
+        return relation_module
 
     def set_forward(self, x, is_feature=False):
         """ Forward pass for a single few-shot episode.
@@ -71,8 +116,11 @@ class RelationNet(MetaTemplate):
         # Expand the query embeddings contiguously to match the number of classes, of shape (n_way**2 * n_query, feat_dim)
         z_query_ext = z_query.repeat_interleave(self.n_way, 0)
 
-        # Combine support and query embeddings to form pairs, of shape (n_way**2 * n_query, feat_dim * 2)
-        relation_pairs = torch.cat((z_support_ext, z_query_ext), 1)
+        # Combine support and query embeddings to form pairs, of shape (n_way**2 * n_query, feat_dim * 2) for concatenation and (n_way**2 * n_query, feat_dim) for difference
+        if self.distance_type == 'fc-diff':
+            relation_pairs = z_support_ext - z_query_ext
+        else:
+            relation_pairs = torch.cat((z_support_ext, z_query_ext), 1)
         
         # Pass the pairs through the relation network, of shape (n_way * n_query, n_way)
         relation_scores = self.relation_module(relation_pairs).view(-1, self.n_way)
@@ -104,7 +152,7 @@ class RelationNet(MetaTemplate):
         Args:
             epoch: Current epoch
             train_loader: Dataloader for training episodes
-            optimizer: Optimizer to use for training
+            optimizer: Optimizer to use for training (Not used in RelationNet, as it uses two optimizers)
         """
         #wandb.watch(self, log="parameters", log_freq=print_freq)
 
@@ -121,10 +169,17 @@ class RelationNet(MetaTemplate):
                     self.n_way = x.size(0)
 
             # Compute loss for a single episode and perform a gradient step
-            optimizer.zero_grad()
+            self.backbone_optim.zero_grad()
+            if self.relation_module_optim is not None:
+                self.relation_module_optim.zero_grad()
+
             loss = self.set_forward_loss(x)
             loss.backward()
-            optimizer.step()
+
+            self.backbone_optim.step()
+            if self.relation_module_optim is not None:
+                self.relation_module_optim.step()
+
             avg_loss = avg_loss + loss.item()
 
             # Log the loss
