@@ -69,9 +69,9 @@ def run(cfg):
     print("Checkpoint directory:", cfg.checkpoint.dir)
     for split in cfg.eval_split:
         acc_mean, acc_std = test(cfg, model, split)
-        results.append([f"{cfg.exp.name}_{cfg.n_way}_{cfg.n_shot}", split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query])
+        results.append([f"{cfg.method.name}_{cfg.n_way}_{cfg.n_shot}", split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query])
 
-    print(f"Results logged to ./checkpoints/{cfg.method.type}/results.txt")
+    print(f"Results logged to ./checkpoints/{cfg.method.name}/results.txt")
 
     if cfg.mode == "train":
         table = wandb.Table(data=results, columns=["name", "split", "acc_mean", "acc_std", "n_way", "n_shot", "n_query"])
@@ -93,8 +93,24 @@ def train(train_loader, val_loader, model, cfg):
 
     if not os.path.isdir(cp_dir):
         os.makedirs(cp_dir)
-    wandb.init(project=cfg.wandb.project, entity=cfg.wandb.entity, config=OmegaConf.to_container(cfg, resolve=True),
-               group=cfg.exp.name, settings=wandb.Settings(start_method="thread"), mode=cfg.wandb.mode)
+    run_name = f"{cfg.method.name}_{cfg.n_way}w_{cfg.n_shot}s"
+    if cfg.method.deep_distance_type:
+        run_name += f"_{cfg.method.deep_distance_type}"
+    if cfg.method.representative_aggregation:
+        run_name += f"_{cfg.method.representative_aggregation.split('.')[-1]}"
+    if cfg.method.deep_distance_layer_sizes:
+        run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
+    if cfg.backbone.layer_dim:
+        run_name += f"_{len(cfg.backbone.layer_dim)}lf"
+    wandb.init(
+        project=cfg.wandb.project, 
+        entity=cfg.wandb.entity, 
+        config=OmegaConf.to_container(cfg, resolve=True),
+        group=cfg.exp.name, 
+        settings=wandb.Settings(start_method="thread"), 
+        mode=cfg.wandb.mode,
+        name=run_name,
+        )
     wandb.define_metric("*", step_metric="epoch")
     
     if cfg.exp.resume:

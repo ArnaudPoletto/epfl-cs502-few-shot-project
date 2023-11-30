@@ -62,7 +62,7 @@ class RelationNet(MetaTemplate):
         self.loss_fn = nn.MSELoss().cuda()
         self.distance_type = deep_distance_type
         self.representative_aggregation = representative_aggregation
-
+        print(f"The representative aggregation is {self.representative_aggregation}")
         # Define the relation module, either as deep distance or as a simple distance for ablation
         self.relation_module = self.get_relation_module(deep_distance_layer_sizes, deep_distance_type, relation_module_dropout)
         

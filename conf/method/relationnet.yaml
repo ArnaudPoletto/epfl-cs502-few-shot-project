@@ -3,5 +3,11 @@ defaults:
 
 name: relationnet
 
+deep_distance_layer_sizes: [128, 64, 64, 32, 32, 8, 1]
+deep_distance_type: "fc-diff"
+representative_aggregation: torch.mean
+
 cls:
   _target_: methods.relationnet.RelationNet
+  deep_distance_layer_sizes: ${method.deep_distance_layer_sizes}
+  deep_distance_type: ${method.deep_distance_type}
