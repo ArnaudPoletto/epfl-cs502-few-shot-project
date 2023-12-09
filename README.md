@@ -1,3 +1,7 @@
+Hi,
+
+We had similar issues running baseline on swissprot. For us, the fix was to set the number of classes for swissprot in swissprot.yaml to train_classes: 7195 instead of train_classes: 59. Hopefully it fixes your issue as well.
+
 # Few Shot Benchmark for Biomedical Datasets
 
 
