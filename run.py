@@ -1,3 +1,4 @@
+
 from math import ceil
 
 import hydra
@@ -5,6 +6,7 @@ from hydra.utils import instantiate
 from omegaconf import OmegaConf
 from prettytable import PrettyTable
 from tqdm import tqdm
+import pandas as pd
 
 import wandb
 from datasets.cell.tabula_muris import *
@@ -69,17 +71,33 @@ def run(cfg):
     print("Checkpoint directory:", cfg.checkpoint.dir)
     for split in cfg.eval_split:
         acc_mean, acc_std = test(cfg, model, split)
-        results.append([f"{cfg.method.name}_{cfg.n_way}_{cfg.n_shot}", split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query])
+        run_name = f"{cfg.method.name}_{cfg.n_way}w_{cfg.n_shot}s"
+        if cfg.method.name == "relationnet":
+            if cfg.method.deep_distance_type:
+                run_name += f"_{cfg.method.deep_distance_type}"
+            if cfg.method.representative_aggregation:
+                run_name += f"_{cfg.method.representative_aggregation}"
+            if cfg.method.deep_distance_layer_sizes:
+                run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
+            if cfg.backbone.layer_dim:
+                run_name += f"_{len(cfg.backbone.layer_dim)}lf"
+        results.append([run_name, split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query])
 
     print(f"Results logged to ./checkpoints/{cfg.method.name}/results.txt")
 
+    columns = ["name", "split", "acc_mean", "acc_std", "n_way", "n_shot", "n_query"]
     if cfg.mode == "train":
-        table = wandb.Table(data=results, columns=["name", "split", "acc_mean", "acc_std", "n_way", "n_shot", "n_query"])
+        table = wandb.Table(data=results, columns=columns)
         wandb.log({"eval_results": table})
 
-    display_table = PrettyTable(["name", "split", "acc_mean", "acc_std", "n_way", "n_shot", "n_query"])
+    display_table = PrettyTable(columns)
     for row in results:
         display_table.add_row(row)
+        # Open the results file and append the results, with a timestamp
+        timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
+        dataset_name = cfg.dataset.name
+        df = pd.DataFrame([[timestamp, dataset_name] + row])
+        df.to_csv(f'./results.csv', mode='a', header=False, index=False)
 
     print(display_table)
 
@@ -94,14 +112,15 @@ def train(train_loader, val_loader, model, cfg):
     if not os.path.isdir(cp_dir):
         os.makedirs(cp_dir)
     run_name = f"{cfg.method.name}_{cfg.n_way}w_{cfg.n_shot}s"
-    if cfg.method.deep_distance_type:
-        run_name += f"_{cfg.method.deep_distance_type}"
-    if cfg.method.representative_aggregation:
-        run_name += f"_{cfg.method.representative_aggregation.split('.')[-1]}"
-    if cfg.method.deep_distance_layer_sizes:
-        run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
-    if cfg.backbone.layer_dim:
-        run_name += f"_{len(cfg.backbone.layer_dim)}lf"
+    if cfg.method.name == "relationnet":
+        if cfg.method.deep_distance_type:
+            run_name += f"_{cfg.method.deep_distance_type}"
+        if cfg.method.representative_aggregation:
+            run_name += f"_{cfg.method.representative_aggregation}"
+        if cfg.method.deep_distance_layer_sizes:
+            run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
+        if cfg.backbone.layer_dim:
+            run_name += f"_{len(cfg.backbone.layer_dim)}lf"
     wandb.init(
         project=cfg.wandb.project, 
         entity=cfg.wandb.entity, 

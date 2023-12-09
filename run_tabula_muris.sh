@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the list of models
-declare -a models=("protonet" "matchingnet" "maml")
+declare -a models=("protonet" "matchingnet" "maml" "relationnet")
 
 # Define the pairs of I and J
 declare -a pairs=(
@@ -25,8 +25,8 @@ declare -a pairs=(
 for model in "${models[@]}"; do
     # Then iterate over each pair and echo the command
     for pair in "${pairs[@]}"; do
-        I=$(echo $pair | cut -d ' ' -f1)
-        J=$(echo $pair | cut -d ' ' -f2)
-        python run.py exp.name=s2 method=$model dataset=tabula_muris_${I}_${J}
+        W=$(echo $pair | cut -d ' ' -f1)
+        S=$(echo $pair | cut -d ' ' -f2)
+        ( conda run -n few --no-capture-output --live-stream python run.py exp.name=tabula_muris method=$model dataset=tabula_muris n_way=$W n_shot=$S )
     done
 done

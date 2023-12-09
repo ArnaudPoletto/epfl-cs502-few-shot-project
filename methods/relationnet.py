@@ -52,7 +52,7 @@ class RelationNet(MetaTemplate):
             n_support: int,
             deep_distance_layer_sizes: List[int] = [128, 64, 64, 32, 32, 8, 1],
             deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'] = 'l1',
-            representative_aggregation: Callable[[torch.Tensor, int], torch.Tensor] | Callable[[torch.Tensor], torch.Tensor] = torch.mean,
+            representative_aggregation: Callable[[torch.Tensor, int], torch.Tensor] | Callable[[torch.Tensor], torch.Tensor] = 'mean',
             learning_rate: float = 1e-4,
             backbone_weight_decay: float = 1e-5,
             relation_module_dropout: float = 0.0,
@@ -61,8 +61,7 @@ class RelationNet(MetaTemplate):
 
         self.loss_fn = nn.MSELoss().cuda()
         self.distance_type = deep_distance_type
-        self.representative_aggregation = representative_aggregation
-        print(f"The representative aggregation is {self.representative_aggregation}")
+        self.representative_aggregation = torch.sum if representative_aggregation is 'sum' else torch.mean
         # Define the relation module, either as deep distance or as a simple distance for ablation
         self.relation_module = self.get_relation_module(deep_distance_layer_sizes, deep_distance_type, relation_module_dropout)
         
@@ -74,7 +73,7 @@ class RelationNet(MetaTemplate):
     def get_relation_module(
             self, 
             deep_distance_layer_sizes: List[int], 
-            deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc'], 
+            deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'], 
             dropout: float
         ):
         """ Creates the relation module, either as deep distance or as a simple distance for ablation. """
@@ -89,7 +88,7 @@ class RelationNet(MetaTemplate):
             case 'l1':
                 relation_module = lambda x: -F.pairwise_distance(x[:, :x.shape[1]//2], x[:, x.shape[1]//2:], p=1).reshape(-1, 1)
             case _: 
-                raise ValueError('deep_distance_type must be one of [fc, euclidean, cosine, l1]')
+                raise ValueError('deep_distance_type must be one of [fc-conc, fc-diff, euclidean, cosine, l1]')
             
         return relation_module
 
@@ -108,7 +107,7 @@ class RelationNet(MetaTemplate):
         z_query = z_query.contiguous().reshape(-1, self.feat_dim)
 
         # Element-wise sum/mean over support examples for each class to form a single class representative, of shape (n_way, feat_dim)
-        z_support = self.representative_aggregation(z_support, 1) # torch.sum(z_support, 1)
+        z_support = self.representative_aggregation(z_support, 1)
 
         # Expand the class representatives to match the number of queries, of shape (n_way**2 * n_query, feat_dim)
         z_support_ext = z_support.unsqueeze(0).repeat(self.n_way * self.n_query, 1, 1).view(-1, self.feat_dim)
