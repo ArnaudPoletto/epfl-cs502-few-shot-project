@@ -15,7 +15,7 @@ for aggregation in "${representative_aggregations[@]}"; do
             # Then iterate over each backbone_layer_dim
             for backbone_dim in "${backbone_layer_dims[@]}"; do
                 # Run the command with the specified parameters
-                ( conda run -n few --no-capture-output --live-stream python run.py exp.name=ablation_swissprot method=relationnet dataset=tabula_muris n_way=5 n_shot=5 method.representative_aggregation=$aggregation method.deep_distance_type=$distance_type method.deep_distance_layer_sizes="$layer_size" backbone.layer_dim="$backbone_dim" )
+                ( conda run -n few --no-capture-output --live-stream python run.py exp.name=ablation_swissprot method=relationnet dataset=swissprot n_way=5 n_shot=5 method.representative_aggregation=$aggregation method.deep_distance_type=$distance_type method.deep_distance_layer_sizes="$layer_size" backbone.layer_dim="$backbone_dim" )
             done
         done
     done
