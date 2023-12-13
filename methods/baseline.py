@@ -114,8 +114,8 @@ class Baseline(MetaTemplate):
         z_support, z_query = self.parse_feature(x, is_feature=False)
 
         # Detach ensures we don't change the weights in main training process
-        z_support = z_support.contiguous().view(self.n_way * self.n_support, -1).detach().to(self.device)
-        z_query = z_query.contiguous().view(self.n_way * self.n_query, -1).detach().to(self.device)
+        z_support = z_support.contiguous().view(-1, z_support.size(-1)).detach().to(self.device)
+        z_query = z_query.contiguous().view(-1, z_query.size(-1)).detach().to(self.device)
 
         if y is None:  # Classification
             y_support = torch.from_numpy(np.repeat(range(self.n_way), self.n_support))

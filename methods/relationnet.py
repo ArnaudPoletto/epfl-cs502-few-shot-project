@@ -53,11 +53,16 @@ class RelationNet(MetaTemplate):
             deep_distance_layer_sizes: List[int] = [128, 64, 64, 32, 32, 8, 1],
             deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'] = 'l1',
             representative_aggregation: Callable[[torch.Tensor, int], torch.Tensor] | Callable[[torch.Tensor], torch.Tensor] = 'mean',
+            optimizer: torch.optim = torch.optim.Adam,
             learning_rate: float = 1e-4,
             backbone_weight_decay: float = 1e-5,
+            relation_module_weight_decay: float = 0,
             relation_module_dropout: float = 0.0,
         ):
         super(RelationNet, self).__init__(backbone, n_way, n_support)
+
+        print('n_way', n_way)
+        print('n_support', n_support)
 
         self.loss_fn = nn.MSELoss().cuda()
         self.distance_type = deep_distance_type
@@ -65,10 +70,13 @@ class RelationNet(MetaTemplate):
         # Define the relation module, either as deep distance or as a simple distance for ablation
         self.relation_module = self.get_relation_module(deep_distance_layer_sizes, deep_distance_type, relation_module_dropout)
         
-        self.backbone_optim = torch.optim.Adam(backbone.parameters(), lr=learning_rate, weight_decay=backbone_weight_decay)
+        self.backbone_optim = None
+        if not isinstance(backbone.encoder, nn.Identity):
+            self.backbone_optim = optimizer(backbone.parameters(), lr=learning_rate, weight_decay=backbone_weight_decay)
+            
         self.relation_module_optim = None
         if deep_distance_type in ['fc-conc', 'fc-diff']:
-            self.relation_module_optim = torch.optim.Adam(self.relation_module.parameters(), lr=learning_rate)
+            self.relation_module_optim = optimizer(self.relation_module.parameters(), lr=learning_rate, weight_decay=relation_module_weight_decay)
 
     def get_relation_module(
             self, 
@@ -168,14 +176,16 @@ class RelationNet(MetaTemplate):
                     self.n_way = x.size(0)
 
             # Compute loss for a single episode and perform a gradient step
-            self.backbone_optim.zero_grad()
+            if self.backbone_optim is not None: 
+                self.backbone_optim.zero_grad()
             if self.relation_module_optim is not None:
                 self.relation_module_optim.zero_grad()
 
             loss = self.set_forward_loss(x)
             loss.backward()
 
-            self.backbone_optim.step()
+            if self.backbone_optim is not None: 
+                self.backbone_optim.step()
             if self.relation_module_optim is not None:
                 self.relation_module_optim.step()
 

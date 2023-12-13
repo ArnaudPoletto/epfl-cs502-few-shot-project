@@ -9,18 +9,22 @@ class FCNet(nn.Module):
     def __init__(self, x_dim, layer_dim=[64, 64], dropout=0.2, fast_weight=False):
         super(FCNet, self).__init__()
         self.fast_weight = fast_weight
+        
+        if len(layer_dim) == 0:
+            self.encoder = nn.Identity()
+            self.final_feat_dim = x_dim
+        else:
+            layers = []
+            in_dim = x_dim
+            for dim in layer_dim:
+                if self.fast_weight:
+                    layers.append(full_block_fw(in_dim, dim, dropout))
+                else:
+                    layers.append(full_block(in_dim, dim, dropout))
+                in_dim = dim
 
-        layers = []
-        in_dim = x_dim
-        for dim in layer_dim:
-            if self.fast_weight:
-                layers.append(full_block_fw(in_dim, dim, dropout))
-            else:
-                layers.append(full_block(in_dim, dim, dropout))
-            in_dim = dim
-
-        self.encoder = nn.Sequential(*layers)
-        self.final_feat_dim = layer_dim[-1]
+            self.encoder = nn.Sequential(*layers)
+            self.final_feat_dim = layer_dim[-1]
 
     def forward(self, x):
         x = self.encoder(x)

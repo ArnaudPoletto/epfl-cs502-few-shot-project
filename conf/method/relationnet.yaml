@@ -7,8 +7,13 @@ deep_distance_layer_sizes: [128, 64, 64, 32, 32, 8, 1]
 deep_distance_type: "fc-conc"
 representative_aggregation: "sum"
 
+learning_rate: 0.0001
+backbone_weight_decay: 0.00001
+
 cls:
   _target_: methods.relationnet.RelationNet
   deep_distance_layer_sizes: ${method.deep_distance_layer_sizes}
   deep_distance_type: ${method.deep_distance_type}
   representative_aggregation: ${method.representative_aggregation}
+  learning_rate: ${method.learning_rate}
+  backbone_weight_decay: ${method.backbone_weight_decay}

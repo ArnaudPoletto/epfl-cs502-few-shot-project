@@ -73,19 +73,23 @@ def run(cfg):
         acc_mean, acc_std = test(cfg, model, split)
         run_name = f"{cfg.method.name}_{cfg.n_way}w_{cfg.n_shot}s"
         if cfg.method.name == "relationnet":
-            if cfg.method.deep_distance_type:
-                run_name += f"_{cfg.method.deep_distance_type}"
-            if cfg.method.representative_aggregation:
-                run_name += f"_{cfg.method.representative_aggregation}"
-            if cfg.method.deep_distance_layer_sizes:
-                run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
-            if cfg.backbone.layer_dim:
-                run_name += f"_{len(cfg.backbone.layer_dim)}lf"
-        results.append([run_name, split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query])
-
+            run_name += f"_{cfg.method.deep_distance_type}"
+            run_name += f"_{cfg.method.representative_aggregation}"
+            run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
+            run_name += f"_{len(cfg.backbone.layer_dim)}lf"
+            run_name += f"_{cfg.method.learning_rate}lr"
+            run_name += f"_{cfg.method.backbone_weight_decay}bbwd"
+            run_name += f"_{cfg.backbone.dropout}do"
+                
+            results.append([run_name, split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query, cfg.method.learning_rate, cfg.method.backbone_weight_decay, cfg.backbone.dropout])
+        else:
+            results.append([run_name, split, acc_mean, acc_std, cfg.n_way, cfg.n_shot, cfg.n_query])
     print(f"Results logged to ./checkpoints/{cfg.method.name}/results.txt")
 
     columns = ["name", "split", "acc_mean", "acc_std", "n_way", "n_shot", "n_query"]
+    if cfg.method.name == "relationnet":
+        columns += ["learning_rate", "backbone_weight_decay", "backbone_dropout"]
+        
     if cfg.mode == "train":
         table = wandb.Table(data=results, columns=columns)
         wandb.log({"eval_results": table})
@@ -111,16 +115,17 @@ def train(train_loader, val_loader, model, cfg):
 
     if not os.path.isdir(cp_dir):
         os.makedirs(cp_dir)
+        
     run_name = f"{cfg.method.name}_{cfg.n_way}w_{cfg.n_shot}s"
     if cfg.method.name == "relationnet":
-        if cfg.method.deep_distance_type:
-            run_name += f"_{cfg.method.deep_distance_type}"
-        if cfg.method.representative_aggregation:
-            run_name += f"_{cfg.method.representative_aggregation}"
-        if cfg.method.deep_distance_layer_sizes:
-            run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
-        if cfg.backbone.layer_dim:
-            run_name += f"_{len(cfg.backbone.layer_dim)}lf"
+        run_name += f"_{cfg.method.deep_distance_type}"
+        run_name += f"_{cfg.method.representative_aggregation}"
+        run_name += f"_{len(cfg.method.deep_distance_layer_sizes)}lg"
+        run_name += f"_{len(cfg.backbone.layer_dim)}lf"
+        run_name += f"_{cfg.method.learning_rate}lr"
+        run_name += f"_{cfg.method.backbone_weight_decay}bbwd"
+        run_name += f"_{cfg.backbone.dropout}do"
+
     wandb.init(
         project=cfg.wandb.project, 
         entity=cfg.wandb.entity, 

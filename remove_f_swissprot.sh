@@ -1,11 +1,11 @@
 #!/bin/bash
 
-declare -a representative_aggregations=("mean" "sum")
-declare -a deep_distance_types=("cosine" "euclidean" "fc-conc" "fc-diff" "l1")
+declare -a representative_aggregations=("sum")
+declare -a deep_distance_types=("fc-conc")
 declare -a deep_distance_layer_sizes=("[128, 64, 32, 1]" "[128, 1]")
-declare -a backbone_layer_dims=("[128, 128, 128, 128]" "[16]")
+declare -a backbone_layer_dims=("[]")
 
-dataset="tabula_muris"
+dataset="swissprot"
 model="relationnet"
 n_way="5"
 n_shot="5"
