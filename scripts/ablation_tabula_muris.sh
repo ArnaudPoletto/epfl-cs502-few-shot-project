@@ -1,19 +1,19 @@
 #!/bin/bash
 
-declare -a representative_aggregations=("mean" "sum")
-declare -a deep_distance_types=("cosine" "euclidean" "fc-conc" "fc-diff" "l1")
+declare -a representative_aggregations=("sum" "mean")
+declare -a deep_distance_types=("fc-conc" "fc-diff" "cosine" "l1" "euclidean")
 declare -a deep_distance_layer_sizes=("[128, 64, 32, 1]" "[128, 1]")
 declare -a backbone_layer_dims=("[128, 128, 128, 128]" "[16]")
 
 dataset="tabula_muris"
 model="relationnet"
-n_way="5"
-n_shot="5"
-learning_rate="0.001"
-backbone_weight_decay="0.001"
-backbone_dropout="0.0"
+n_way="5"                       # Default analysis configuration
+n_shot="5"                      # Default analysis configuration
+learning_rate="0.001"           # Best parameter from tuning
+backbone_weight_decay="0.001"   # Best parameter from tuning
+backbone_dropout="0.0"          # Best parameter from tuning 
 
-for aggregation in "${representative_aggregations[@]}"; do
+for representative_aggregation in "${representative_aggregations[@]}"; do
     for deep_distance_type in "${deep_distance_types[@]}"; do
         for deep_distance_layer_size in "${deep_distance_layer_sizes[@]}"; do
             for backbone_layer_dim in "${backbone_layer_dims[@]}"; do
@@ -24,7 +24,7 @@ for aggregation in "${representative_aggregations[@]}"; do
                         dataset=${dataset} \
                         n_way=${n_way} \
                         n_shot=${n_shot} \
-                        method.representative_aggregation=${aggregation} \
+                        method.representative_aggregation=${representative_aggregation} \
                         method.deep_distance_type=${deep_distance_type} \
                         method.deep_distance_layer_sizes="${deep_distance_layer_size}" \
                         backbone.layer_dim="${backbone_layer_dim}" \
@@ -36,3 +36,5 @@ for aggregation in "${representative_aggregations[@]}"; do
         done
     done
 done
+
+./ablation_tabula_muris_no_f.sh

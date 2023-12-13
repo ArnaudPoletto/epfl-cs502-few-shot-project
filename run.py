@@ -101,7 +101,7 @@ def run(cfg):
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
         dataset_name = cfg.dataset.name
         df = pd.DataFrame([[timestamp, dataset_name] + row])
-        df.to_csv(f'./results.csv', mode='a', header=False, index=False)
+        df.to_csv(f'./results/results.csv', mode='a', header=False, index=False)
 
     print(display_table)
 

@@ -1,34 +1,35 @@
-import numpy as np
+import wandb
 import torch
-import torch.nn as nn
-from torch.autograd import Variable
+import numpy as np
 from utils.data_utils import one_hot
 from methods.meta_template import MetaTemplate
-import wandb
-import torch.nn.functional as F
 
-from typing import List, Literal, Callable
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from torch.optim import Optimizer
+
+from typing import List, Literal
 
 from backbones.blocks import full_block
 
-from enum import Enum
-
-class DistanceType(Enum):
-    """ Enum for the different distance types. """
-    FC_CONC = 'fc-conc'
-    FC_DIFF = 'fc-diff'
-    EUCLIDEAN = 'euclidean'
-    COSINE = 'cosine'
-    L1 = 'l1'
-
 class RelationModule(nn.Module):
-    """ Relation module for RelationNet. """
     def __init__(self,
                  feat_dim: int,
                  deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'],
                  deep_distance_layer_sizes: List[int],
                  dropout: float
         ):
+        """
+        Relation module for RelationNet.
+
+        Args:
+            feat_dim (int): Dimension of the feature vectors
+            deep_distance_type (str): Type of distance to use for the relation module. Can be one of ['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff']
+            deep_distance_layer_sizes (List[int]): List of layer sizes for the deep distance network
+            dropout (float): Dropout rate to use for the deep distance network
+        """
         super(RelationModule, self).__init__()
         
         self.relation_module = nn.Sequential()
@@ -41,7 +42,16 @@ class RelationModule(nn.Module):
         self.relation_module.add_module('classifier', nn.Linear(in_size, deep_distance_layer_sizes[-1]))
         self.relation_module.add_module('sigmoid', nn.Sigmoid())
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
+        """ 
+        Forward pass for the relation module.
+        
+        Args:
+            x (torch.Tensor): Tensor containing pairs of shape (n_way * n_query, feat_dim * 2) for concatenation and (n_way * n_query, feat_dim) for difference
+        
+        Returns:
+            x (torch.Tensor): Tensor containing the relation scores of shape (n_way * n_query, n_way)
+        """
         return self.relation_module(x)
 
 class RelationNet(MetaTemplate):
@@ -52,17 +62,30 @@ class RelationNet(MetaTemplate):
             n_support: int,
             deep_distance_layer_sizes: List[int] = [128, 64, 64, 32, 32, 8, 1],
             deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'] = 'l1',
-            representative_aggregation: Callable[[torch.Tensor, int], torch.Tensor] | Callable[[torch.Tensor], torch.Tensor] = 'mean',
+            representative_aggregation: Literal['mean', 'sum'] = 'mean',
             optimizer: torch.optim = torch.optim.Adam,
             learning_rate: float = 1e-4,
             backbone_weight_decay: float = 1e-5,
             relation_module_weight_decay: float = 0,
             relation_module_dropout: float = 0.0,
         ):
+        """
+        Implementation of the Relation Network.
+        
+        Args:
+            backbone (nn.Module): The backbone network to use (i.e. the embedding module f_varphi)
+            n_way (int): Number of classes per episode (N-way)
+            n_support (int): Number of support examples per class (K-shot)
+            deep_distance_layer_sizes (List[int]): List of layer sizes for the deep distance network. Defaults to [128, 64, 64, 32, 32, 8, 1]
+            deep_distance_type (str): Type of distance to use for the relation module. Can be one of ['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff']. Defaults to 'l1'
+            representative_aggregation (str): Aggregation function to use for the class representatives. Can be one of ['mean', 'sum']. Defaults to 'mean'
+            optimizer (torch.optim): Optimizer to use for training. Defaults to torch.optim.Adam
+            learning_rate (float): Learning rate to use for training. Defaults to 1e-4
+            backbone_weight_decay (float): Weight decay to use for the backbone network. Defaults to 1e-5
+            relation_module_weight_decay (float): Weight decay to use for the relation module. Defaults to 0
+            relation_module_dropout (float): Dropout rate to use for the deep distance network. Defaults to 0.0            
+        """
         super(RelationNet, self).__init__(backbone, n_way, n_support)
-
-        print('n_way', n_way)
-        print('n_support', n_support)
 
         self.loss_fn = nn.MSELoss().cuda()
         self.distance_type = deep_distance_type
@@ -84,7 +107,17 @@ class RelationNet(MetaTemplate):
             deep_distance_type: Literal['l1', 'euclidean', 'cosine', 'fc-conc', 'fc-diff'], 
             dropout: float
         ):
-        """ Creates the relation module, either as deep distance or as a simple distance for ablation. """
+        """ 
+        Creates the relation module, either as deep distance or as a simple distance for ablation.
+
+        Args:
+            deep_distance_layer_sizes (List[int]): List of layer sizes for the deep distance network
+            deep_distance_type (str): Type of distance to use for the relation module
+            dropout (float): Dropout rate to use for the deep distance network
+
+        Returns:
+            relation_module (RelationModule): The relation module
+        """
         relation_module = None
         match deep_distance_type:
             case 'fc-conc' | 'fc-diff':
@@ -100,14 +133,16 @@ class RelationNet(MetaTemplate):
             
         return relation_module
 
-    def set_forward(self, x, is_feature=False):
-        """ Forward pass for a single few-shot episode.
+    def set_forward(self, x: torch.Tensor, is_feature: bool = False):
+        """ 
+        Forward pass for a single few-shot episode.
+
         Args:
-            x: Variable containing support and query sets of shape (n_way, n_support + n_query, data_dim)
-            is_feature: True if x is already a feature tensor, False otherwise
+            x (torch.Tensor): Variable containing support and query sets of shape (n_way, n_support + n_query, data_dim)
+            is_feature (bool): True if x is already a feature tensor, False otherwise
 
         Returns:
-            relation_scores: Tensor containing the relation scores of shape (n_way * n_query, n_way)
+            relation_scores (torch.Tensor): Tensor containing the relation scores of shape (n_way * n_query, n_way)
         """
         # Get support and query set embeddings of shape (n_way, n_support, feat_dim) and (n_way * n_query, feat_dim)
         z_support, z_query = self.parse_feature(x, is_feature)
@@ -137,13 +172,15 @@ class RelationNet(MetaTemplate):
 
         return relation_scores
         
-    def set_forward_loss(self, x):
-        """ Loss for a single few-shot episode.
+    def set_forward_loss(self, x: torch.Tensor):
+        """ 
+        Loss for a single few-shot episode.
+
         Args:
-            x: Variable containing support and query sets of shape (n_way, n_support + n_query, data_dim)
+            x (torch.Tensor): Variable containing support and query sets of shape (n_way, n_support + n_query, data_dim)
 
         Returns:
-            loss: The MSE loss for the episode
+            loss (nn.Module): The MSE loss for the episode
         """
         # Vector of the form [0, ..., 0, 1, ..., 1, ..., n_way, ..., n_way] of shape (n_way * n_query)
         y_query = torch.from_numpy(np.repeat(range(self.n_way), self.n_query))
@@ -154,15 +191,16 @@ class RelationNet(MetaTemplate):
         relation_scores = self.set_forward(x)
         return self.loss_fn(relation_scores, y_query)
     
-    def train_loop(self, epoch, train_loader, optimizer, print_freq=10):
-        """ Training loop for RelationNet.
-        Args:
-            epoch: Current epoch
-            train_loader: Dataloader for training episodes
-            optimizer: Optimizer to use for training (Not used in RelationNet, as it uses two optimizers)
-        """
-        #wandb.watch(self, log="parameters", log_freq=print_freq)
+    def train_loop(self, epoch: int, train_loader: DataLoader, optimizer: Optimizer, print_freq: int = 10):
+        """ 
+        Training loop for RelationNet.
 
+        Args:
+            epoch (int): Current epoch
+            train_loader (DataLoader): Dataloader for training episodes
+            optimizer (Optimizer): Optimizer to use for training (Not used in RelationNet, as it uses two optimizers)
+            print_freq (int): Frequency of logging training information
+        """
         avg_loss = 0
         for i, (x, _) in enumerate(train_loader):
             # x is a tuple of support and query sets, each of shape (n_way, n_support + n_query, data_dim)
@@ -196,30 +234,37 @@ class RelationNet(MetaTemplate):
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss / float(i + 1)))
                 wandb.log({"loss": avg_loss / float(i + 1)})
 
-    def correct(self, x):
+    def correct(self, x: torch.Tensor):
+        """
+        Compute the accuracy for a single few-shot episode.
+
+        Args:
+            x (torch.Tensor): Variable containing support and query sets of shape (n_way, n_support + n_query, data_dim)
+
+        Returns:
+            top1_correct (float): Number of correctly classified queries
+            len(y_query) (int): Number of queries
+        """
         scores = self.set_forward(x)
         y_query = np.repeat(range(self.n_way), self.n_query)
 
-        #print('scores', scores.shape, scores)
-        #print('y_query', y_query.shape, y_query)
-
         _, topk_labels = scores.data.topk(1, 1, True, True)
-        #print('topk_labels', topk_labels.shape, topk_labels)
         topk_ind = topk_labels.cpu().numpy()
-        #print('topk_ind', topk_ind.shape, topk_ind)
         top1_correct = np.sum(topk_ind[:, 0] == y_query)
-        #print('top1_correct', top1_correct.shape, top1_correct)
+        
         return float(top1_correct), len(y_query)
 
-    def test_loop(self, test_loader, return_std=False):
-        """ Testing loop for RelationNet.
+    def test_loop(self, test_loader: DataLoader, return_std: bool = False):
+        """ 
+        Testing loop for RelationNet.
+
         Args:
-            test_loader: Dataloader for testing episodes
-            return_std: True if the standard deviation should be returned, False otherwise
+            test_loader (DataLoader): Dataloader for testing episodes
+            return_std (bool): True if the standard deviation should be returned, False otherwise
 
         Returns:
-            acc_mean: Mean accuracy over all episodes
-            acc_std: Standard deviation over all episodes
+            acc_mean (float): Mean accuracy over all episodes
+            acc_std (float): Standard deviation over all episodes
         """
         acc_all = []
         iter_num = len(test_loader)
@@ -235,7 +280,6 @@ class RelationNet(MetaTemplate):
                     self.n_way = x.size(0)
 
             # Compute the accuracy for a single episode
-            #print('x', x.shape, x)
             correct_this, count_this = self.correct(x)
             acc_all.append(correct_this / count_this * 100)
 
