@@ -1,4 +1,4 @@
-# CS-502 Deep learning in Biomedicine </br> Enhancing Few-Shot Learning in Biomedicine: Benchmarking Relation Network
+# CS-502 Deep Learning in Biomedicine </br> Enhancing Few-Shot Learning in Biomedicine: Benchmarking Relation Network
 
 ## Authors
 - 😊 Ozan Güven (297076) - ozan.guven@epfl.ch <br>
