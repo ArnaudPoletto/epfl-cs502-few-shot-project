@@ -3,12 +3,12 @@ defaults:
 
 name: relationnet
 
-deep_distance_layer_sizes: [128, 64, 64, 32, 32, 8, 1]
+deep_distance_layer_sizes: [128, 64, 32, 8, 1]
 deep_distance_type: "fc-conc"
 representative_aggregation: "sum"
 
-learning_rate: 0.0001
-backbone_weight_decay: 0.00001
+learning_rate: 0.001
+backbone_weight_decay: 0.001
 
 cls:
   _target_: methods.relationnet.RelationNet
